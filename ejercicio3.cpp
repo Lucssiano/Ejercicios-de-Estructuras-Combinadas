@@ -6,3 +6,5 @@ del 1 al 10 */
 #include <stdio.h>
 
 using namespace std;
+
+// No entiendo en que cambia
