@@ -1,6 +1,7 @@
 /* 7) En una empresa se quiere hacer una reestructuración de sus departamentos
 administrativos, ofreciendo la posibilidad de cambios voluntarios de
 departamentos a sus empleados
+
 Para ello cuenta con los siguientes archivos:
 
 - “Empleados.dat”, con un registro por cada empleado de la empresa, ordenado por
@@ -34,3 +35,215 @@ cantidad de vacantes requeridas, actualizando el archivo “Empleados.dat”
 #include <stdio.h>
 
 using namespace std;
+
+struct Empleado
+{
+  int numLeg, dni, codDepto;
+  char nombreYApellido[36];
+};
+
+struct Vacantes
+{
+  int codDepto, cantVacantes;
+};
+
+struct NodoSL
+{
+  Empleado info; // no necesito el cod de depto
+  NodoSL *sig;
+};
+
+struct Postulantes
+{
+  int numLeg, codDepto;
+  NodoSL *sublista;
+};
+
+struct NodoL
+{
+  Postulantes info; // no necesito numLeg
+  NodoL *sig;
+};
+
+void generarArchivoEmpleados();   // Solo para probarlo
+void generarArchivoPostulantes(); // Solo para probarlo
+// void generarArchivoVacantes(); // Solo para probarlo
+void puntoA(FILE *archPost, FILE *archEmple);
+NodoL *buscarInsertar(NodoL *&lista, Postulantes post);
+void insertar(NodoSL *&lista, Empleado emple);
+void mostrarListado(NodoL *lista);
+// void puntoB();
+
+int main()
+{
+  // generarArchivoEmpleados();   // Solo para probarlo
+  generarArchivoPostulantes(); // Solo para probarlo
+  // generarArchivoVacantes(); // Solo para probarlo
+  FILE *archivoDePostulantes = fopen("Postulantes.dat", "rb");
+  FILE *archivoDeEmpleados = fopen("Empleados.dat", "rb");
+
+  if (archivoDePostulantes == NULL && archivoDeEmpleados == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    puntoA(archivoDePostulantes, archivoDeEmpleados);
+    fclose(archivoDePostulantes);
+    fclose(archivoDeEmpleados);
+  }
+
+  return 0;
+}
+
+void puntoA(FILE *archPost, FILE *archEmple)
+{
+  NodoL *listaPost = NULL, *p;
+  Postulantes post;
+  Empleado infoEmpleados;
+
+  post.sublista = NULL;
+  fread(&post, sizeof(Postulantes), 1, archPost);
+  while (!feof(archPost))
+  {
+
+    p = buscarInsertar(listaPost, post);
+
+    do
+    {
+      fread(&infoEmpleados, sizeof(Empleado), 1, archEmple);
+    } while (!feof(archEmple) && infoEmpleados.numLeg != post.numLeg);
+
+    if (infoEmpleados.numLeg == post.numLeg)
+    {
+      insertar(p->info.sublista, infoEmpleados);
+      fseek(archEmple, 0, SEEK_SET);
+      fread(&post, sizeof(Postulantes), 1, archPost);
+    }
+    else
+    {
+      cout << "No se encontro al cod de depto" << endl;
+      fseek(archPost, 0, SEEK_END);
+      fseek(archEmple, 0, SEEK_END);
+    }
+  }
+  mostrarListado(listaPost);
+}
+
+void mostrarListado(NodoL *lista)
+{
+  NodoL *p = lista;
+  NodoSL *q;
+
+  while (p != NULL)
+  {
+    cout << endl;
+    cout << "Codigo de depto: " << p->info.codDepto << endl;
+    q = p->info.sublista;
+    while (q != NULL)
+    {
+      cout << "Numero de legajo: " << q->info.numLeg << endl;
+      cout << "Numero de DNI: " << q->info.dni << endl;
+      cout << "Nombre y Apellido: " << q->info.nombreYApellido << endl;
+      cout << endl;
+      q = q->sig;
+    }
+    p = p->sig;
+  }
+}
+
+NodoL *buscarInsertar(NodoL *&lista, Postulantes post)
+{
+  NodoL *ant, *p = lista;
+  while (p != NULL && p->info.codDepto < post.codDepto)
+  {
+    ant = p;
+    p = p->sig;
+  }
+  if (p != NULL && post.codDepto == p->info.codDepto)
+    return p;
+  else
+  {
+    NodoL *n = new NodoL;
+    n->info = post;
+    n->sig = p;
+    if (p != lista)
+      ant->sig = n;
+    else
+      lista = n;
+    return n;
+  }
+}
+
+void insertar(NodoSL *&lista, Empleado emple) // Por orden de llegada
+{
+  NodoSL *n, *p, *ant;
+  n = new NodoSL;
+  n->info = emple; // el cod de depto tambien se escribe pero no es necesario
+  p = lista;
+  while (p != NULL)
+  {
+    ant = p;
+    p = p->sig;
+  }
+  n->sig = p;
+  if (p != lista)
+    ant->sig = n;
+  else
+    lista = n;
+}
+
+void generarArchivoEmpleados()
+{
+  FILE *archEmple = fopen("Empleados.dat", "ab");
+  if (archEmple == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    Empleado emple;
+
+    cout << "ARMANDO ARCHIVO DE EMPLEADOS" << endl;
+    cout << "Ingrese el codigo de depto (0 para finalizar): ";
+    cin >> emple.codDepto;
+    while (emple.codDepto != 0)
+    {
+      cout << "Ingrese el dni del empleado: ";
+      cin >> emple.dni;
+      cout << "Ingrese el numero de legajo del empleado: ";
+      cin >> emple.numLeg;
+      cout << "Ingrese nombre y apellido del empleado: ";
+      fflush(stdin);
+      cin.getline(emple.nombreYApellido, 36);
+
+      fwrite(&emple, sizeof(Empleado), 1, archEmple);
+
+      cout << "Ingrese el codigo de depto (0 para finalizar): ";
+      cin >> emple.codDepto;
+    }
+    fclose(archEmple);
+  }
+}
+
+void generarArchivoPostulantes()
+{
+  FILE *archPost = fopen("Postulantes.dat", "ab");
+  if (archPost == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    Postulantes post;
+
+    cout << "ARMANDO ARCHIVO DE POSTULANTES" << endl;
+    cout << "Ingrese el codigo de depto (0 para finalizar): ";
+    cin >> post.codDepto;
+    while (post.codDepto != 0)
+    {
+      cout << "Ingrese el numero de legajo del empleado: ";
+      cin >> post.numLeg;
+
+      fwrite(&post, sizeof(Postulantes), 1, archPost);
+
+      cout << "Ingrese el codigo de depto (0 para finalizar): ";
+      cin >> post.codDepto;
+    }
+    fclose(archPost);
+  }
+}

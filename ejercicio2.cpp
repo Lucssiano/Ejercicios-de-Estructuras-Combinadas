@@ -38,7 +38,7 @@ struct NodoL
   NodoL *sig;
 };
 
-struct DatosArchivoVentas // Hay alguna manera, al igual que en el 1, para que esto no lo tenga que usar?
+struct DatosArchivoVentas // Hay alguna manera, al igual que en el 1, para que esto no lo tenga que usar? // Capaz obviando el otro dato que no necesito y dejarlo con basura
 {
   int numFactura, codVendedor;
   float imp;
@@ -149,7 +149,7 @@ void mostrarArchivo(FILE *archivo, NodoL *lista)
   }
 }
 
-void mostrarLista(NodoL *&lista)
+void mostrarLista(NodoL *&lista) // creo que se puede pasar por valor, no hace falta por referencia
 {
   NodoL *p = lista;
   NodoSL *q;
