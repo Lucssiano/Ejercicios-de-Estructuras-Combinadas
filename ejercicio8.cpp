@@ -21,8 +21,23 @@ Apellido del Autor          Cantidad total de títulos
 ......................              99
 */
 
+// Que serian las altas?
+
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
 
 using namespace std;
+
+struct Libro
+{
+  int cod, cantEjemplares;
+  char titulo[30], apellidoAutor[15];
+  // Nacionalidad int (????)
+};
+
+int main()
+{
+
+  return 0;
+}

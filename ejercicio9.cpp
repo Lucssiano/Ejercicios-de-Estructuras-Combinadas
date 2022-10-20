@@ -42,3 +42,17 @@ ordenado por número de mozo (cobran el 1% sobre cada adición) */
 #include <stdio.h>
 
 using namespace std;
+
+// arch platos y bebidas
+struct Plato
+{
+  int cod;
+  float precio;
+  char descrip[40];
+};
+
+int main()
+{
+
+  return 0;
+}

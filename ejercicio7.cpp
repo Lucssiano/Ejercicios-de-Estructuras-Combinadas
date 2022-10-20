@@ -68,35 +68,38 @@ struct NodoL
 void generarArchivoEmpleados();   // Solo para probarlo
 void generarArchivoPostulantes(); // Solo para probarlo
 // void generarArchivoVacantes(); // Solo para probarlo
-void puntoA(FILE *archPost, FILE *archEmple);
+void puntoA(FILE *archPost, FILE *archEmple, NodoL *&listaPost);
 NodoL *buscarInsertar(NodoL *&lista, Postulantes post);
 void insertar(NodoSL *&lista, Empleado emple);
 void mostrarListado(NodoL *lista);
-// void puntoB();
+void puntoB(FILE *archVacantes, FILE *archEmple, NodoL *listaPost);
 
 int main()
 {
   // generarArchivoEmpleados();   // Solo para probarlo
-  generarArchivoPostulantes(); // Solo para probarlo
+  // generarArchivoPostulantes(); // Solo para probarlo
   // generarArchivoVacantes(); // Solo para probarlo
   FILE *archivoDePostulantes = fopen("Postulantes.dat", "rb");
   FILE *archivoDeEmpleados = fopen("Empleados.dat", "rb");
+  FILE *archivoDeVacantes = fopen("Vacantes.dat", "rb");
 
-  if (archivoDePostulantes == NULL && archivoDeEmpleados == NULL)
+  if (archivoDePostulantes == NULL && archivoDeEmpleados == NULL && archivoDeVacantes == NULL)
     cout << "ERROR" << endl;
   else
   {
-    puntoA(archivoDePostulantes, archivoDeEmpleados);
+    NodoL *lista = NULL;
+    puntoA(archivoDePostulantes, archivoDeEmpleados, lista);
     fclose(archivoDePostulantes);
     fclose(archivoDeEmpleados);
+    // puntoB(archivoDeEmpleados, archivoDeVacantes, lista);
   }
 
   return 0;
 }
 
-void puntoA(FILE *archPost, FILE *archEmple)
+void puntoA(FILE *archPost, FILE *archEmple, NodoL *&listaPost)
 {
-  NodoL *listaPost = NULL, *p;
+  NodoL *p;
   Postulantes post;
   Empleado infoEmpleados;
 
@@ -191,6 +194,33 @@ void insertar(NodoSL *&lista, Empleado emple) // Por orden de llegada
     lista = n;
 }
 
+/* Asignar los postulantes a los departamentos según el orden de llegada y la
+cantidad de vacantes requeridas, actualizando el archivo “Empleados.dat */
+/* Tendria que guardar los datos de los empleados que hay hasta ahora en una lista y agregar los que estan en la lista que cree, eso despues pasarlo al archivo con wb (Reescribiendolo) */
+void puntoB(FILE *archVacantes, FILE *archEmple, NodoL *listaPost)
+{
+  archEmple = fopen("Empleados.dat", "wb");
+
+  // NodoL *p = listaPost;
+  // NodoSL *q;
+
+  // while (p != NULL)
+  // {
+  //   cout << endl;
+  //   cout << "Codigo de depto: " << p->info.codDepto << endl;
+  //   q = p->info.sublista;
+  //   while (q != NULL)
+  //   {
+  //     cout << "Numero de legajo: " << q->info.numLeg << endl;
+  //     cout << "Numero de DNI: " << q->info.dni << endl;
+  //     cout << "Nombre y Apellido: " << q->info.nombreYApellido << endl;
+  //     cout << endl;
+  //     q = q->sig;
+  //   }
+  //   p = p->sig;
+  // }
+}
+
 void generarArchivoEmpleados()
 {
   FILE *archEmple = fopen("Empleados.dat", "ab");
@@ -245,5 +275,31 @@ void generarArchivoPostulantes()
       cin >> post.codDepto;
     }
     fclose(archPost);
+  }
+}
+
+void generarArchivoVacantes()
+{
+  FILE *archVacantes = fopen("Vacantes.dat", "wb");
+  if (archVacantes == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    Vacantes vac;
+
+    cout << "ARMANDO ARCHIVO DE VACANTES" << endl;
+    cout << "Ingrese el codigo de depto (0 para finalizar): ";
+    cin >> vac.codDepto;
+    while (vac.codDepto != 0)
+    {
+      cout << "Ingrese la cantidad de vacantes: ";
+      cin >> vac.cantVacantes;
+
+      fwrite(&vac, sizeof(Vacantes), 1, archVacantes);
+
+      cout << "Ingrese el codigo de depto (0 para finalizar): ";
+      cin >> vac.codDepto;
+    }
+    fclose(archVacantes);
   }
 }
