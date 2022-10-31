@@ -38,13 +38,13 @@ struct NodoL
   NodoL *sig;
 };
 
-struct DatosArchivoVentas // Hay alguna manera, al igual que en el 1, para que esto no lo tenga que usar? // Capaz obviando el otro dato que no necesito y dejarlo con basura
+struct DatosArchivoVentas
 {
   int numFactura, codVendedor;
   float imp;
 };
 
-struct DatosVendedor // Hay alguna manera, al igual que en el 1, para que esto no lo tenga que usar?
+struct DatosVendedor
 {
   int codVendedor;
   float impTotal;

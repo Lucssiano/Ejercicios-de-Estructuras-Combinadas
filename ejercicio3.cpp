@@ -11,8 +11,6 @@ y el detalle de cada venta, ordenadas de mayor a menor por importe.
 b) Genere el archivo “VentasVendedor.dat” ordenado por código de vendedor,
 con código de vendedor y el importe total de ventas. */
 
-// Un vector de punteros que cada posicion apunta a una lista por cada vendedor
-
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
@@ -27,65 +25,157 @@ struct DatosVentas
 
 struct NodoL
 {
-  int codVendedor[10];
+  DatosVentas info;
   NodoL *sig;
 };
 
-// struct DatosArchivoVentas // Hay alguna manera, al igual que en el 1, para que esto no lo tenga que usar?
-// {
-//   int numFactura, codVendedor;
-//   float imp;
-// };
+struct DatosArchivoVentas
+{
+  int numFactura, codVendedor;
+  float imp;
+};
 
-// struct DatosVendedor // Hay alguna manera, al igual que en el 1, para que esto no lo tenga que usar?
-// {
-//   int codVendedor;
-//   float impTotal;
-// };
+struct DatosVendedor
+{
+  int codVendedor;
+  float impTotal;
+};
 
-// void generarArchivoVentas(); // Solo para probarlo
-void puntoA(FILE *archVentas, NodoL *&lista);
-// NodoL *buscarInsertar(NodoL *&lista, Vendedor vdor);
-// void insertar(NodoSL *&lista, DatosVentas datVentas);
-// void mostrarLista(NodoL *&lista); // Solo para probarlo
-// void puntoB(NodoL *&lista);
-// void mostrarArchivo(FILE *archivo, NodoL *lista); // Solo para probarlo
+void inicializarVector(NodoL *vecListas[10]);
+void puntoA(FILE *archVentas, NodoL *vecListas[10]);
+void insertar(NodoL *&lista, DatosVentas datVentas);
+void mostrarLista(NodoL *vecListas[10]);
+void puntoB(NodoL *vecListas[10]);
+void mostrarArchivo(FILE *archivo);
 
 int main()
 {
-  // generarArchivoVentas(); // Solo para probarlo
   FILE *archivoDeVentas = fopen("VENTAS.dat", "rb");
-  NodoL *lista = NULL;
-  puntoA(archivoDeVentas, lista);
-
-  return 0;
+  if (archivoDeVentas == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    NodoL *vecCod[10];
+    inicializarVector(vecCod);
+    puntoA(archivoDeVentas, vecCod);
+    puntoB(vecCod);
+    return 0;
+  }
 }
 
-// void puntoA(FILE *archVentas, NodoL *&lista)
-// {
-//   if (archVentas == NULL)
-//     cout << "ERROR" << endl;
-//   else
-//   {
-//     NodoL *p;
-//     Vendedor vdor;
-//     DatosVentas infoVts;
-//     DatosArchivoVentas dtsArch;
+void inicializarVector(NodoL *vecListas[10])
+{
+  for (int i = 0; i < 10; i++)
+    vecListas[i] = NULL;
+}
 
-//     vdor.subLista = NULL;
-//     fread(&dtsArch, sizeof(DatosArchivoVentas), 1, archVentas);
-//     while (!feof(archVentas))
-//     {
-//       vdor.codVendedor = dtsArch.codVendedor;
-//       p = buscarInsertar(lista, vdor);
+void puntoA(FILE *archVentas, NodoL *vecListas[10])
+{
+  DatosVentas infoVts;
+  DatosArchivoVentas dtsArch;
 
-//       infoVts.imp = dtsArch.imp;
-//       infoVts.numFactura = dtsArch.numFactura;
-//       insertar(p->info.subLista, infoVts);
+  fread(&dtsArch, sizeof(DatosArchivoVentas), 1, archVentas);
+  while (!feof(archVentas))
+  {
+    infoVts.imp = dtsArch.imp;
+    infoVts.numFactura = dtsArch.numFactura;
+    NodoL *listaALlenar = vecListas[dtsArch.codVendedor - 1];
+    insertar(listaALlenar, infoVts);
+    vecListas[dtsArch.codVendedor - 1] = listaALlenar;
+    fread(&dtsArch, sizeof(DatosArchivoVentas), 1, archVentas);
+  }
+  fclose(archVentas);
+  mostrarLista(vecListas);
+}
 
-//       fread(&dtsArch, sizeof(DatosArchivoVentas), 1, archVentas);
-//     }
-//     fclose(archVentas);
-//     // mostrarLista(lista); // Solo para probarlo
-//   }
-// }
+void insertar(NodoL *&lista, DatosVentas datVentas)
+{
+  NodoL *q, *p, *ant;
+  q = new NodoL;
+  q->info = datVentas;
+  p = lista;
+  while (p != NULL && p->info.imp > datVentas.imp)
+  {
+    ant = p;
+    p = p->sig;
+  }
+  q->sig = p;
+  if (p != lista)
+    ant->sig = q;
+  else
+    lista = q;
+}
+
+void mostrarLista(NodoL *vecListas[10])
+{
+  NodoL *p; // Lista que quiero mostrar del vector
+  for (int i = 0; i < 10; i++)
+  {
+    cout << "--------------------" << endl;
+    cout << "Codigo de vendedor: " << i + 1 << endl;
+    p = vecListas[i];
+    if (!p)
+      cout << "No tiene ventas" << endl;
+
+    while (p != NULL)
+    {
+      cout << "Importe: " << p->info.imp << endl;
+      cout << "Numero de Factura: " << p->info.numFactura << endl;
+      cout << endl;
+      p = p->sig;
+    }
+  }
+}
+
+//  b) Genere el archivo “VentasVendedor.dat” ordenado por código de vendedor,
+// con código de vendedor y el importe total de ventas.
+void puntoB(NodoL *vecListas[10])
+{
+  FILE *archivoPuntoB = fopen("VentasVendedorPunto3.dat", "wb");
+  if (archivoPuntoB == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    DatosVendedor dtsVdor;
+    NodoL *p;
+
+    for (int i = 0; i < 10; i++)
+    {
+      p = vecListas[i];
+      dtsVdor.codVendedor = i + 1;
+      dtsVdor.impTotal = 0;
+      while (p != NULL)
+      {
+        dtsVdor.impTotal += p->info.imp;
+        p = p->sig;
+      }
+      fwrite(&dtsVdor, sizeof(DatosVendedor), 1, archivoPuntoB);
+    }
+  }
+  fclose(archivoPuntoB);
+  mostrarArchivo(archivoPuntoB);
+}
+
+void mostrarArchivo(FILE *archivo)
+{
+  archivo = fopen("VentasVendedorPunto3.dat", "rb");
+  if (archivo == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    DatosVendedor dtsVdor;
+
+    fread(&dtsVdor, sizeof(DatosVendedor), 1, archivo);
+    while (!feof(archivo))
+    {
+      if (dtsVdor.impTotal > 0)
+      {
+        cout << endl;
+        cout << "Cod vendedor: " << dtsVdor.codVendedor << endl;
+        cout << "Importe total de las ventas: " << dtsVdor.impTotal << endl;
+      }
+      fread(&dtsVdor, sizeof(DatosVendedor), 1, archivo);
+    }
+    fclose(archivo);
+  }
+}
