@@ -54,9 +54,9 @@ struct DatosVendedor // Hay alguna manera, al igual que en el 1, para que esto n
 void puntoA(FILE *archVentas, NodoL *&lista);
 NodoL *buscarInsertar(NodoL *&lista, Vendedor vdor);
 void insertar(NodoSL *&lista, DatosVentas datVentas);
-// void mostrarLista(NodoL *&lista); // Solo para probarlo
+void mostrarLista(NodoL *lista);
 void puntoB(NodoL *&lista);
-// void mostrarArchivo(FILE *archivo, NodoL *lista); // Solo para probarlo
+void mostrarArchivo(FILE *archivo);
 
 int main()
 {
@@ -95,7 +95,7 @@ void puntoA(FILE *archVentas, NodoL *&lista)
       fread(&dtsArch, sizeof(DatosArchivoVentas), 1, archVentas);
     }
     fclose(archVentas);
-    // mostrarLista(lista); // Solo para probarlo
+    mostrarLista(lista);
   }
 }
 
@@ -125,10 +125,10 @@ void puntoB(NodoL *&lista)
     }
   }
   fclose(archivoPuntoB);
-  // mostrarArchivo(archivoPuntoB, lista); // Solo para probarlo
+  mostrarArchivo(archivoPuntoB);
 }
 
-void mostrarArchivo(FILE *archivo, NodoL *lista)
+void mostrarArchivo(FILE *archivo)
 {
   archivo = fopen("VentasVendedor.dat", "rb");
   if (archivo == NULL)
@@ -149,7 +149,7 @@ void mostrarArchivo(FILE *archivo, NodoL *lista)
   }
 }
 
-void mostrarLista(NodoL *&lista) // creo que se puede pasar por valor, no hace falta por referencia
+void mostrarLista(NodoL *lista)
 {
   NodoL *p = lista;
   NodoSL *q;

@@ -36,47 +36,61 @@ cantidad de vacantes requeridas, actualizando el archivo “Empleados.dat”
 
 using namespace std;
 
-struct Empleado
+#define cantCodDeptos 50
+
+struct EmpleadoArchivo
 {
   int numLeg, dni, codDepto;
   char nombreYApellido[36];
 };
 
-struct Vacantes
+struct VacantesArchivo
 {
   int codDepto, cantVacantes;
 };
 
+struct PostulantesArchivo
+{
+  int numLeg, codDepto;
+};
+
+struct DatosSublista
+{
+  int numLeg, dni;
+  char nombreYApellido[36];
+};
+
 struct NodoSL
 {
-  Empleado info; // no necesito el cod de depto
+  DatosSublista info;
   NodoSL *sig;
 };
 
-struct Postulantes
+struct DeptoPostulado
 {
-  int numLeg, codDepto;
-  NodoSL *sublista;
+  int codDepto;
+  NodoSL *subLista;
 };
 
 struct NodoL
 {
-  Postulantes info; // no necesito numLeg
+  DeptoPostulado info;
   NodoL *sig;
 };
 
 void generarArchivoEmpleados();   // Solo para probarlo
 void generarArchivoPostulantes(); // Solo para probarlo
-// void generarArchivoVacantes(); // Solo para probarlo
+void generarArchivoVacantes();    // Solo para probarlo
 void puntoA(FILE *archPost, FILE *archEmple, NodoL *&listaPost);
-NodoL *buscarInsertar(NodoL *&lista, Postulantes post);
-void insertar(NodoSL *&lista, Empleado emple);
+NodoL *buscarInsertar(NodoL *&lista, DeptoPostulado deptoPost);
+void insertarSinOrden(NodoSL *&lista, DatosSublista datSub);
 void mostrarListado(NodoL *lista);
-void puntoB(FILE *archVacantes, FILE *archEmple, NodoL *listaPost);
+void puntoB(FILE *archVac, NodoL *&lista);
+void mostrarArchivoActualizado();
 
 int main()
 {
-  // generarArchivoEmpleados();   // Solo para probarlo
+  // generarArchivoEmpleados(); // Solo para probarlo
   // generarArchivoPostulantes(); // Solo para probarlo
   // generarArchivoVacantes(); // Solo para probarlo
   FILE *archivoDePostulantes = fopen("Postulantes.dat", "rb");
@@ -87,11 +101,14 @@ int main()
     cout << "ERROR" << endl;
   else
   {
-    NodoL *lista = NULL;
-    puntoA(archivoDePostulantes, archivoDeEmpleados, lista);
+    NodoL *listaEmplePostulados = NULL;
+    puntoA(archivoDePostulantes, archivoDeEmpleados, listaEmplePostulados);
     fclose(archivoDePostulantes);
     fclose(archivoDeEmpleados);
-    // puntoB(archivoDeEmpleados, archivoDeVacantes, lista);
+    puntoB(archivoDeVacantes, listaEmplePostulados);
+    fclose(archivoDePostulantes);
+    fclose(archivoDeEmpleados);
+    fclose(archivoDeVacantes);
   }
 
   return 0;
@@ -99,36 +116,81 @@ int main()
 
 void puntoA(FILE *archPost, FILE *archEmple, NodoL *&listaPost)
 {
+  DeptoPostulado deptoPost;
+  PostulantesArchivo postulante;
   NodoL *p;
-  Postulantes post;
-  Empleado infoEmpleados;
+  EmpleadoArchivo empleado;
+  DatosSublista datoSub;
 
-  post.sublista = NULL;
-  fread(&post, sizeof(Postulantes), 1, archPost);
+  deptoPost.subLista = NULL;
+  fread(&postulante, sizeof(PostulantesArchivo), 1, archPost);
   while (!feof(archPost))
   {
-
-    p = buscarInsertar(listaPost, post);
+    deptoPost.codDepto = postulante.codDepto;
+    p = buscarInsertar(listaPost, deptoPost);
 
     do
     {
-      fread(&infoEmpleados, sizeof(Empleado), 1, archEmple);
-    } while (!feof(archEmple) && infoEmpleados.numLeg != post.numLeg);
+      fread(&empleado, sizeof(EmpleadoArchivo), 1, archEmple);
+    } while (!feof(archEmple) && empleado.numLeg != postulante.numLeg);
+    fseek(archEmple, 0, SEEK_SET);
 
-    if (infoEmpleados.numLeg == post.numLeg)
+    if (empleado.numLeg == postulante.numLeg)
     {
-      insertar(p->info.sublista, infoEmpleados);
-      fseek(archEmple, 0, SEEK_SET);
-      fread(&post, sizeof(Postulantes), 1, archPost);
+      datoSub.numLeg = empleado.numLeg;
+      datoSub.dni = empleado.dni;
+      strcpy(datoSub.nombreYApellido, empleado.nombreYApellido);
+      insertarSinOrden(p->info.subLista, datoSub);
     }
     else
     {
       cout << "No se encontro al cod de depto" << endl;
-      fseek(archPost, 0, SEEK_END);
-      fseek(archEmple, 0, SEEK_END);
+      fseek(archPost, 0, SEEK_SET);
     }
+    fread(&postulante, sizeof(PostulantesArchivo), 1, archPost);
   }
+
   mostrarListado(listaPost);
+}
+
+NodoL *buscarInsertar(NodoL *&lista, DeptoPostulado deptoPost)
+{
+  NodoL *ant, *p = lista;
+  while (p != NULL && p->info.codDepto < deptoPost.codDepto)
+  {
+    ant = p;
+    p = p->sig;
+  }
+  if (p != NULL && deptoPost.codDepto == p->info.codDepto)
+    return p;
+  else
+  {
+    NodoL *n = new NodoL;
+    n->info = deptoPost;
+    n->sig = p;
+    if (p != lista)
+      ant->sig = n;
+    else
+      lista = n;
+    return n;
+  }
+}
+
+void insertarSinOrden(NodoSL *&lista, DatosSublista datSub)
+{
+  NodoSL *n, *p = lista;
+  n = new NodoSL;
+  n->info = datSub;
+  if (p == NULL)
+  {
+    n->sig = p;
+    lista = n;
+  }
+  else
+  {
+    p->sig = n;
+    n->sig = NULL;
+  }
 }
 
 void mostrarListado(NodoL *lista)
@@ -140,12 +202,270 @@ void mostrarListado(NodoL *lista)
   {
     cout << endl;
     cout << "Codigo de depto: " << p->info.codDepto << endl;
-    q = p->info.sublista;
+    q = p->info.subLista;
     while (q != NULL)
     {
       cout << "Numero de legajo: " << q->info.numLeg << endl;
       cout << "Numero de DNI: " << q->info.dni << endl;
       cout << "Nombre y Apellido: " << q->info.nombreYApellido << endl;
+      cout << endl;
+      q = q->sig;
+    }
+    p = p->sig;
+  }
+}
+
+void puntoB(FILE *archVac, NodoL *&lista)
+{
+  FILE *archivoDeEmpleados = fopen("EmpleadosActualizados.dat", "wb"); // deberia usar el mismo archivo pero para probar lo hago así
+  if (archivoDeEmpleados == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    VacantesArchivo vacanteArch;
+    EmpleadoArchivo empleArch /* , empleadoOriginal */;
+
+    // FILE *empleOrig = fopen("Empleados.dat", "rb");
+    // do
+    // {
+    //   fread(&empleArch, sizeof(EmpleadoArchivo), 1, empleOrig);
+    //   empleadoOriginal.codDepto = empleArch.codDepto;
+    //   empleadoOriginal.numLeg = empleArch.numLeg;
+    //   empleadoOriginal.dni = empleArch.dni;
+    //   strcpy(empleadoOriginal.nombreYApellido, empleArch.nombreYApellido);
+    //   fwrite(&empleadoOriginal, sizeof(EmpleadoArchivo), 1, archivoDeEmpleados);
+    // } while (!feof(empleOrig));
+
+    NodoL *p = lista;
+    NodoSL *q;
+
+    while (p != NULL)
+    {
+      do
+      {
+        fread(&vacanteArch, sizeof(VacantesArchivo), 1, archVac);
+      } while (!feof(archVac) && vacanteArch.codDepto != p->info.codDepto);
+      fseek(archVac, 0, SEEK_SET);
+
+      if (vacanteArch.codDepto == p->info.codDepto)
+      {
+        int cantVacantes = vacanteArch.cantVacantes;
+        empleArch.codDepto = p->info.codDepto;
+
+        q = p->info.subLista;
+        while (q != NULL)
+        {
+          if (cantVacantes > 0)
+          {
+            empleArch.numLeg = q->info.numLeg;
+            empleArch.dni = q->info.dni;
+            strcpy(empleArch.nombreYApellido, q->info.nombreYApellido);
+            cantVacantes--;
+            fwrite(&empleArch, sizeof(EmpleadoArchivo), 1, archivoDeEmpleados);
+            q = q->sig;
+          }
+          else
+            q = NULL;
+        }
+        p = p->sig;
+      }
+      else
+        cout << "No se encontro al cod de depto" << endl;
+    }
+    fclose(archivoDeEmpleados);
+    mostrarArchivoActualizado();
+  }
+}
+
+void mostrarArchivoActualizado()
+{
+  FILE *archEmple = fopen("EmpleadosActualizados.dat", "rb");
+  if (archEmple == NULL)
+    cout << "ERROR" << endl;
+  else
+  {
+    EmpleadoArchivo emple;
+
+    cout << "ARCHIVO DE EMPLEADOS ACTUALIZADO" << endl;
+    fread(&emple, sizeof(EmpleadoArchivo), 1, archEmple);
+    while (!feof(archEmple))
+    {
+      cout << endl;
+      cout << "Codigo de depto: " << emple.codDepto << endl;
+      cout << "Dni del empleado: " << emple.dni << endl;
+      cout << "Numero de legajo del empleado: " << emple.numLeg << endl;
+      cout << "Nombre y apellido del empleado: " << emple.nombreYApellido << endl;
+      /* FALTA QUE MUESTRE LARA KA QUE NO SE MOVIO DE DEPTO */
+      fread(&emple, sizeof(EmpleadoArchivo), 1, archEmple);
+    }
+    fclose(archEmple);
+  }
+}
+
+// Archivos
+// void generarArchivoEmpleados()
+// {
+//   FILE *archEmple = fopen("Empleados.dat", "wb");
+//   if (archEmple == NULL)
+//     cout << "ERROR" << endl;
+//   else
+//   {
+//     EmpleadoArchivo emple;
+
+//     cout << "ARMANDO ARCHIVO DE EMPLEADOS" << endl;
+//     cout << "Ingrese el codigo de depto (0 para finalizar): ";
+//     cin >> emple.codDepto;
+//     while (emple.codDepto != 0)
+//     {
+//       cout << "Ingrese el dni del empleado: ";
+//       cin >> emple.dni;
+//       cout << "Ingrese el numero de legajo del empleado: ";
+//       cin >> emple.numLeg;
+//       cout << "Ingrese nombre y apellido del empleado: ";
+//       fflush(stdin);
+//       cin.getline(emple.nombreYApellido, 36);
+
+//       fwrite(&emple, sizeof(EmpleadoArchivo), 1, archEmple);
+
+//       cout << "Ingrese el codigo de depto (0 para finalizar): ";
+//       cin >> emple.codDepto;
+//     }
+//     fclose(archEmple);
+//   }
+// }
+
+// void generarArchivoPostulantes()
+// {
+//   FILE *archPost = fopen("Postulantes.dat", "ab");
+//   if (archPost == NULL)
+//     cout << "ERROR" << endl;
+//   else
+//   {
+//     PostulantesArchivo post;
+
+//     cout << "ARMANDO ARCHIVO DE POSTULANTES" << endl;
+//     cout << "Ingrese el codigo de depto (0 para finalizar): ";
+//     cin >> post.codDepto;
+//     while (post.codDepto != 0)
+//     {
+//       cout << "Ingrese el numero de legajo del empleado: ";
+//       cin >> post.numLeg;
+
+//       fwrite(&post, sizeof(PostulantesArchivo), 1, archPost);
+
+//       cout << "Ingrese el codigo de depto (0 para finalizar): ";
+//       cin >> post.codDepto;
+//     }
+//     fclose(archPost);
+//   }
+// }
+
+// void generarArchivoVacantes()
+// {
+//   FILE *archVacantes = fopen("Vacantes.dat", "wb");
+//   if (archVacantes == NULL)
+//     cout << "ERROR" << endl;
+//   else
+//   {
+//     VacantesArchivo vac;
+
+//     cout << "ARMANDO ARCHIVO DE VACANTES" << endl;
+//     cout << "Ingrese el codigo de depto (0 para finalizar): ";
+//     cin >> vac.codDepto;
+//     while (vac.codDepto != 0)
+//     {
+//       cout << "Ingrese la cantidad de vacantes: ";
+//       cin >> vac.cantVacantes;
+
+//       fwrite(&vac, sizeof(VacantesArchivo), 1, archVacantes);
+
+//       cout << "Ingrese el codigo de depto (0 para finalizar): ";
+//       cin >> vac.codDepto;
+//     }
+//     fclose(archVacantes);
+//   }
+// }
+
+// Segundo programa - Intento con Cola
+/*
+
+struct NodoCola
+{
+  DatosSublista info;
+  NodoCola *sig;
+};
+
+struct VectorColas
+{
+  NodoCola *pri;
+  NodoCola *ult;
+};
+
+void inicializarVector(VectorColas v[cantCodDeptos])
+{
+  for (int i = 0; i < cantCodDeptos; i++)
+  {
+    v[i].pri = NULL;
+    v[i].ult = NULL;
+  }
+}
+
+void encolar(NodoCola *&pri, NodoCola *&ult, DatosSublista dato)
+{
+  NodoCola *p = new NodoCola;
+  p->info = dato;
+  p->sig = NULL;
+  if (ult != NULL)
+    ult->sig = p;
+  else
+    pri = p;
+  ult = p;
+}
+
+DatosSublista desencolar(NodoCola *&pri, NodoCola *&ult)
+{
+  DatosSublista dato;
+  NodoCola *p = pri;
+  pri = p->sig;
+  dato = p->info;
+  delete p;
+  if (pri == NULL)
+    ult = NULL;
+  return dato;
+}
+
+p = listaPost;
+
+while (p)
+{
+  while (v[p->info.codDepto - 1].pri)
+  {
+    DatosSublista desencolado = desencolar(v[p->info.codDepto - 1].pri, v[p->info.codDepto - 1].ult);
+    insertarSinOrden(p->info.subLista, desencolado);
+  }
+  p = p->sig;
+}
+
+encolar(v[postulante.codDepto - 1].pri, v[postulante.codDepto - 1].ult, datoSub);
+
+*/
+
+// Primer programa - Intento con Lista
+/* void mostrarListado(NodoL *lista)
+{
+  NodoL *p = lista;
+  NodoSL *q;
+
+  while (p != NULL)
+  {
+    cout << endl;
+    cout << "Codigo de depto: " << p->info.codDepto << endl;
+    // q = p->info.sublista;
+    while (q != NULL)
+    {
+      cout << "Numero de legajo: " << q->numLeg << endl;
+      cout << "Numero de DNI: " << q->dni << endl;
+      cout << "Nombre y Apellido: " << q->nombreYApellido << endl;
       cout << endl;
       q = q->sig;
     }
@@ -194,112 +514,28 @@ void insertar(NodoSL *&lista, Empleado emple) // Por orden de llegada
     lista = n;
 }
 
-/* Asignar los postulantes a los departamentos según el orden de llegada y la
-cantidad de vacantes requeridas, actualizando el archivo “Empleados.dat */
-/* Tendria que guardar los datos de los empleados que hay hasta ahora en una lista y agregar los que estan en la lista que cree, eso despues pasarlo al archivo con wb (Reescribiendolo) */
 void puntoB(FILE *archVacantes, FILE *archEmple, NodoL *listaPost)
 {
   archEmple = fopen("Empleados.dat", "wb");
 
-  // NodoL *p = listaPost;
-  // NodoSL *q;
+  NodoL *p = listaPost;
+  NodoSL *q;
 
-  // while (p != NULL)
-  // {
-  //   cout << endl;
-  //   cout << "Codigo de depto: " << p->info.codDepto << endl;
-  //   q = p->info.sublista;
-  //   while (q != NULL)
-  //   {
-  //     cout << "Numero de legajo: " << q->info.numLeg << endl;
-  //     cout << "Numero de DNI: " << q->info.dni << endl;
-  //     cout << "Nombre y Apellido: " << q->info.nombreYApellido << endl;
-  //     cout << endl;
-  //     q = q->sig;
-  //   }
-  //   p = p->sig;
-  // }
-}
-
-void generarArchivoEmpleados()
-{
-  FILE *archEmple = fopen("Empleados.dat", "ab");
-  if (archEmple == NULL)
-    cout << "ERROR" << endl;
-  else
+  while (p != NULL)
   {
-    Empleado emple;
-
-    cout << "ARMANDO ARCHIVO DE EMPLEADOS" << endl;
-    cout << "Ingrese el codigo de depto (0 para finalizar): ";
-    cin >> emple.codDepto;
-    while (emple.codDepto != 0)
+    cout << endl;
+    cout << "Codigo de depto: " << p->info.codDepto << endl;
+    q = p->info.sublista;
+    while (q != NULL)
     {
-      cout << "Ingrese el dni del empleado: ";
-      cin >> emple.dni;
-      cout << "Ingrese el numero de legajo del empleado: ";
-      cin >> emple.numLeg;
-      cout << "Ingrese nombre y apellido del empleado: ";
-      fflush(stdin);
-      cin.getline(emple.nombreYApellido, 36);
-
-      fwrite(&emple, sizeof(Empleado), 1, archEmple);
-
-      cout << "Ingrese el codigo de depto (0 para finalizar): ";
-      cin >> emple.codDepto;
+      cout << "Numero de legajo: " << q->info.numLeg << endl;
+      cout << "Numero de DNI: " << q->info.dni << endl;
+      cout << "Nombre y Apellido: " << q->info.nombreYApellido << endl;
+      cout << endl;
+      q = q->sig;
     }
-    fclose(archEmple);
+    p = p->sig;
   }
 }
 
-void generarArchivoPostulantes()
-{
-  FILE *archPost = fopen("Postulantes.dat", "ab");
-  if (archPost == NULL)
-    cout << "ERROR" << endl;
-  else
-  {
-    Postulantes post;
-
-    cout << "ARMANDO ARCHIVO DE POSTULANTES" << endl;
-    cout << "Ingrese el codigo de depto (0 para finalizar): ";
-    cin >> post.codDepto;
-    while (post.codDepto != 0)
-    {
-      cout << "Ingrese el numero de legajo del empleado: ";
-      cin >> post.numLeg;
-
-      fwrite(&post, sizeof(Postulantes), 1, archPost);
-
-      cout << "Ingrese el codigo de depto (0 para finalizar): ";
-      cin >> post.codDepto;
-    }
-    fclose(archPost);
-  }
-}
-
-void generarArchivoVacantes()
-{
-  FILE *archVacantes = fopen("Vacantes.dat", "wb");
-  if (archVacantes == NULL)
-    cout << "ERROR" << endl;
-  else
-  {
-    Vacantes vac;
-
-    cout << "ARMANDO ARCHIVO DE VACANTES" << endl;
-    cout << "Ingrese el codigo de depto (0 para finalizar): ";
-    cin >> vac.codDepto;
-    while (vac.codDepto != 0)
-    {
-      cout << "Ingrese la cantidad de vacantes: ";
-      cin >> vac.cantVacantes;
-
-      fwrite(&vac, sizeof(Vacantes), 1, archVacantes);
-
-      cout << "Ingrese el codigo de depto (0 para finalizar): ";
-      cin >> vac.codDepto;
-    }
-    fclose(archVacantes);
-  }
-}
+ */
