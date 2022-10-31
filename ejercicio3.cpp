@@ -127,8 +127,6 @@ void mostrarLista(NodoL *vecListas[10])
   }
 }
 
-//  b) Genere el archivo “VentasVendedor.dat” ordenado por código de vendedor,
-// con código de vendedor y el importe total de ventas.
 void puntoB(NodoL *vecListas[10])
 {
   FILE *archivoPuntoB = fopen("VentasVendedorPunto3.dat", "wb");
