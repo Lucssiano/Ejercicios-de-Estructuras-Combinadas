@@ -23,7 +23,7 @@ adiciones pendientes, informar una leyenda.
 Se pide realizar un programa que:
 1. Imprima la factura de cada mesa que fue ocupada:
 
-Restaurant Fecha :.................. Factura:.......................
+Restaurant Fecha:.................. Factura:.......................
  Cant Descripción Precio Unitario Importe
  ....... ................... ............ ............
 Mozo: .... Total:........................
@@ -36,6 +36,11 @@ de factura, mesa, mozo, e importe.
 
 3. Al final del día emitir un listado con el total a cobrar por cada mozo,
 ordenado por número de mozo (cobran el 1% sobre cada adición) */
+
+/* - Que es la adición? La suma de lo que gasto la mesa?
+-
+
+*/
 
 #include <iostream>
 #include <string.h>
@@ -53,6 +58,6 @@ struct Plato
 
 int main()
 {
-
+  int facturaInicial, fecha;
   return 0;
 }
