@@ -93,7 +93,6 @@ void puntoA(FILE *archComp, NodoL *mt[codigoActividad][meses])
     datosLista.numSocio = datosArch.numSocio;
     datosLista.resultado = datosArch.resultado;
     insertar(listaALlenar, datosLista);
-    mt[datosArch.codActividad - 1][datosArch.fechaComp.mes - 1] = listaALlenar;
 
     fread(&datosArch, sizeof(DatosArchivo), 1, archComp);
   }

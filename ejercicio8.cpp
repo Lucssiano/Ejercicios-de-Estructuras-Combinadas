@@ -54,13 +54,41 @@ struct NodoL
   NodoL *sig;
 };
 
+struct DatosSubLista2
+{
+  int cantTitulos;
+  char apellidoAutor[15];
+};
+
+struct NodoSL2
+{
+  DatosSubLista2 info;
+  NodoSL2 *subSig;
+};
+
+struct DatosLista2
+{
+  int nacionalidad, cantAutores;
+  NodoSL2 *subLista;
+};
+
+struct NodoL2
+{
+  DatosLista2 info;
+  NodoL2 *sig;
+};
+
 void generarArchivoLibros();
 void generarArchivoNovedades();
-void punto1(FILE *archLibros, FILE *archNovedades);
+void punto1y2(FILE *archLibros, FILE *archNovedades);
 void insertar(NodoL *&lista, Libro lib);
 void apareo(NodoL *lista, FILE *archLib, FILE *archLibAct);
+NodoL2 *buscarInsertarL2(NodoL2 *&lista, DatosLista2 datosLis2);
+bool buscarInsertarSL2(NodoSL2 *&lista, DatosSubLista2 datosSubLis2);
+void ordenarLista(NodoL2 *&lista);
+void insertarOrdenado(NodoL2 *&lista, DatosLista2 datosLis2);
 void mostrarArchivoLibrosActualizados();
-void punto2();
+void mostrarListadoPunto2(NodoL2 *lista);
 
 int main()
 {
@@ -75,16 +103,14 @@ int main()
   }
   else
   {
-    punto1(archivoDeLibros, archivoDeNovedades);
+    punto1y2(archivoDeLibros, archivoDeNovedades);
     fclose(archivoDeLibros);
     fclose(archivoDeNovedades);
-    mostrarArchivoLibrosActualizados();
-    // punto2(archivoDeLibros, archivoDeNovedades);
   }
   return 0;
 }
 
-void punto1(FILE *archLibros, FILE *archNovedades)
+void punto1y2(FILE *archLibros, FILE *archNovedades)
 {
   FILE *archivoDeLibrosActualizados = fopen("LIBROSACT.dat", "wb");
   if (archivoDeLibrosActualizados == NULL)
@@ -128,14 +154,26 @@ void insertar(NodoL *&lista, Libro lib)
 void apareo(NodoL *lista, FILE *archLib, FILE *archLibAct)
 {
   NodoL *p1 = lista;
+  NodoL2 *lista2 = NULL;
+  NodoL2 *p2;
+  DatosLista2 datLis2;
+  DatosSubLista2 datSubLis2;
   Libro lib;
 
+  datLis2.subLista = NULL;
   fread(&lib, sizeof(Libro), 1, archLib);
   while (p1 != NULL && !feof(archLib))
   {
     if (p1->info.cod < lib.cod)
     {
       fwrite(&p1->info, sizeof(Libro), 1, archLibAct);
+
+      datLis2.nacionalidad = p1->info.nacionalidad;
+      p2 = buscarInsertarL2(lista2, datLis2);
+      strcpy(datSubLis2.apellidoAutor, p1->info.apellidoAutor);
+      if (buscarInsertarSL2(p2->info.subLista, datSubLis2))
+        p2->info.cantAutores++;
+
       p1 = p1->sig;
     }
     else
@@ -144,12 +182,26 @@ void apareo(NodoL *lista, FILE *archLib, FILE *archLibAct)
       {
         p1->info.cantEjemplares += lib.cantEjemplares;
         fwrite(&p1->info, sizeof(Libro), 1, archLibAct);
+
+        datLis2.nacionalidad = p1->info.nacionalidad;
+        p2 = buscarInsertarL2(lista2, datLis2);
+        strcpy(datSubLis2.apellidoAutor, p1->info.apellidoAutor);
+        if (buscarInsertarSL2(p2->info.subLista, datSubLis2))
+          p2->info.cantAutores++;
+
         p1 = p1->sig;
         fread(&lib, sizeof(Libro), 1, archLib);
       }
       else
       {
         fwrite(&lib, sizeof(Libro), 1, archLibAct);
+
+        datLis2.nacionalidad = lib.nacionalidad;
+        p2 = buscarInsertarL2(lista2, datLis2);
+        strcpy(datSubLis2.apellidoAutor, lib.apellidoAutor);
+        if (buscarInsertarSL2(p2->info.subLista, datSubLis2))
+          p2->info.cantAutores++;
+
         fread(&lib, sizeof(Libro), 1, archLib);
       }
     }
@@ -157,12 +209,139 @@ void apareo(NodoL *lista, FILE *archLib, FILE *archLibAct)
   while (p1 != NULL)
   {
     fwrite(&p1->info, sizeof(Libro), 1, archLibAct);
+
+    datLis2.nacionalidad = p1->info.nacionalidad;
+    p2 = buscarInsertarL2(lista2, datLis2);
+    strcpy(datSubLis2.apellidoAutor, p1->info.apellidoAutor);
+    if (buscarInsertarSL2(p2->info.subLista, datSubLis2))
+      p2->info.cantAutores++;
+
     p1 = p1->sig;
   }
   while (!feof(archLib))
   {
     fwrite(&lib, sizeof(Libro), 1, archLibAct);
+
+    datLis2.nacionalidad = lib.nacionalidad;
+    p2 = buscarInsertarL2(lista2, datLis2);
+    strcpy(datSubLis2.apellidoAutor, lib.apellidoAutor);
+    if (buscarInsertarSL2(p2->info.subLista, datSubLis2))
+      p2->info.cantAutores++;
+
     fread(&lib, sizeof(Libro), 1, archLib);
+  }
+  ordenarLista(lista2);
+  // mostrarListadoPunto2(lista2);
+}
+
+void ordenarLista(NodoL2 *&lista)
+{
+  NodoL2 *listaOrd = NULL;
+  NodoL2 *r;
+  while (lista != NULL)
+  {
+    r = lista;
+    lista = lista->sig;
+    insertarOrdenado(listaOrd, r->info);
+    delete r;
+  }
+  lista = listaOrd;
+  mostrarListadoPunto2(lista);
+}
+
+void insertarOrdenado(NodoL2 *&lista, DatosLista2 datosLis2)
+{
+  NodoL2 *q, *p, *ant;
+  q = new NodoL2;
+  q->info = datosLis2;
+  p = lista;
+  while (p != NULL && p->info.cantAutores > datosLis2.cantAutores)
+  {
+    ant = p;
+    p = p->sig;
+  }
+  q->sig = p;
+  if (p != lista)
+    ant->sig = q;
+  else
+    lista = q;
+}
+
+void mostrarListadoPunto2(NodoL2 *lista)
+{
+  NodoL2 *p = lista;
+  NodoSL2 *q;
+
+  while (p)
+  {
+    q = p->info.subLista;
+
+    cout << "Nacionalidad: " << p->info.nacionalidad << endl;
+    cout << endl;
+    cout << "Cantidad total de autores: " << p->info.cantAutores << endl;
+    while (q)
+    {
+      cout << "Apellido del Autor: " << q->info.apellidoAutor << " Cantidad total de titulos: " << q->info.cantTitulos << endl;
+      q = q->subSig;
+    }
+    cout << endl;
+
+    p = p->sig;
+  }
+}
+
+NodoL2 *buscarInsertarL2(NodoL2 *&lista, DatosLista2 datosLis2)
+{
+  NodoL2 *ant, *p = lista;
+
+  while (p != NULL && datosLis2.nacionalidad != p->info.nacionalidad)
+  {
+    ant = p;
+    p = p->sig;
+  }
+
+  if (p != NULL)
+    return p;
+  else
+  {
+    NodoL2 *n = new NodoL2;
+    datosLis2.cantAutores = 0;
+    n->info = datosLis2;
+    n->sig = p;
+    if (p != lista)
+      ant->sig = n;
+    else
+      lista = n;
+    return n;
+  }
+}
+
+bool buscarInsertarSL2(NodoSL2 *&lista, DatosSubLista2 datosSubLis2)
+{
+  NodoSL2 *p = lista, *ant;
+
+  while (p != NULL && strcmpi(p->info.apellidoAutor, datosSubLis2.apellidoAutor) != 0)
+  {
+    ant = p;
+    p = p->subSig;
+  }
+
+  if (p != NULL)
+  {
+    p->info.cantTitulos++;
+    return false;
+  }
+  else
+  {
+    NodoSL2 *q = new NodoSL2;
+    datosSubLis2.cantTitulos = 1;
+    q->info = datosSubLis2;
+    q->subSig = p;
+    if (p != lista)
+      ant->subSig = q;
+    else
+      lista = q;
+    return true;
   }
 }
 
@@ -197,7 +376,6 @@ void generarArchivoLibros()
   else
   {
     Libro lib;
-    lib.nacionalidad = 0;
 
     cout << "ARMANDO ARCHIVO LIBROS" << endl;
     cout << "Ingrese el codigo de libro (0 para finalizar): ";
@@ -215,7 +393,8 @@ void generarArchivoLibros()
       cout << "Ingrese la cantidad de ejemplares: ";
       cin >> lib.cantEjemplares;
 
-      lib.nacionalidad++;
+      cout << "Nacionalidad: ";
+      cin >> lib.nacionalidad;
 
       fwrite(&lib, sizeof(Libro), 1, archLib);
 
@@ -235,7 +414,6 @@ void generarArchivoNovedades()
   else
   {
     Libro lib;
-    lib.nacionalidad = 0;
 
     cout << "ARMANDO ARCHIVO NOVEDADES" << endl;
     cout << "Ingrese el codigo de libro (0 para finalizar): ";
@@ -253,7 +431,8 @@ void generarArchivoNovedades()
       cout << "Ingrese la cantidad de ejemplares: ";
       cin >> lib.cantEjemplares;
 
-      lib.nacionalidad++;
+      cout << "Nacionalidad: ";
+      cin >> lib.nacionalidad;
 
       fwrite(&lib, sizeof(Libro), 1, archNov);
 

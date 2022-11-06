@@ -99,6 +99,47 @@ void puntoA(FILE *archVentas, NodoL *&lista)
   }
 }
 
+NodoL *buscarInsertar(NodoL *&lista, Vendedor vdor)
+{
+  NodoL *ant, *p = lista;
+  while (p != NULL && p->info.codVendedor < vdor.codVendedor)
+  {
+    ant = p;
+    p = p->sig;
+  }
+  if (p != NULL && vdor.codVendedor == p->info.codVendedor)
+    return p;
+  else
+  {
+    NodoL *n = new NodoL;
+    n->info = vdor;
+    n->sig = p;
+    if (p != lista)
+      ant->sig = n;
+    else
+      lista = n;
+    return n;
+  }
+}
+
+void insertar(NodoSL *&lista, DatosVentas datVentas) // ordenado de MAYOR a MENOR por importe
+{
+  NodoSL *n, *p, *ant;
+  n = new NodoSL;
+  n->info = datVentas;
+  p = lista;
+  while (p != NULL && p->info.imp > datVentas.imp)
+  {
+    ant = p;
+    p = p->sig;
+  }
+  n->sig = p;
+  if (p != lista)
+    ant->sig = n;
+  else
+    lista = n;
+}
+
 void puntoB(NodoL *&lista)
 {
   FILE *archivoPuntoB = fopen("VentasVendedor.dat", "wb");
@@ -168,47 +209,6 @@ void mostrarLista(NodoL *lista)
     }
     p = p->sig;
   }
-}
-
-NodoL *buscarInsertar(NodoL *&lista, Vendedor vdor)
-{
-  NodoL *ant, *p = lista;
-  while (p != NULL && p->info.codVendedor < vdor.codVendedor)
-  {
-    ant = p;
-    p = p->sig;
-  }
-  if (p != NULL && vdor.codVendedor == p->info.codVendedor)
-    return p;
-  else
-  {
-    NodoL *n = new NodoL;
-    n->info = vdor;
-    n->sig = p;
-    if (p != lista)
-      ant->sig = n;
-    else
-      lista = n;
-    return n;
-  }
-}
-
-void insertar(NodoSL *&lista, DatosVentas datVentas) // ordenado de MAYOR a MENOR por importe
-{
-  NodoSL *n, *p, *ant;
-  n = new NodoSL;
-  n->info = datVentas;
-  p = lista;
-  while (p != NULL && p->info.imp > datVentas.imp)
-  {
-    ant = p;
-    p = p->sig;
-  }
-  n->sig = p;
-  if (p != lista)
-    ant->sig = n;
-  else
-    lista = n;
 }
 
 void generarArchivoVentas()
