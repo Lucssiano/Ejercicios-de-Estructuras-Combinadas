@@ -124,10 +124,9 @@ NodoL *buscarInsertar(NodoL *&lista, Vendedor vdor)
 
 void insertar(NodoSL *&lista, DatosVentas datVentas) // ordenado de MAYOR a MENOR por importe
 {
-  NodoSL *n, *p, *ant;
+  NodoSL *n, *p = lista, *ant;
   n = new NodoSL;
   n->info = datVentas;
-  p = lista;
   while (p != NULL && p->info.imp > datVentas.imp)
   {
     ant = p;

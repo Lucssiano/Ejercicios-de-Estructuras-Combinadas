@@ -74,27 +74,21 @@ void generarListado(NodoL *vecInfra[100], FILE *archInfra)
 
 void *buscarInsertar(NodoL *&lista, Infraccion infra)
 {
-  NodoL *p = lista, *ant;
+  NodoL *p = lista;
 
   while (p != NULL && strcmpi(p->info.patente, infra.patente) != 0)
-  {
-    ant = p;
     p = p->sig;
-  }
 
-  if (p == NULL || strcmpi(p->info.patente, infra.patente) != 0)
+  if (p != NULL)
+    p->info.contInfra++;
+  else
   {
     NodoL *q = new NodoL;
     infra.contInfra = 1;
     q->info = infra;
-    q->sig = p;
-    if (p != lista)
-      ant->sig = q;
-    else
-      lista = q;
+    q->sig = lista;
+    lista = q;
   }
-  else
-    p->info.contInfra++;
 }
 
 void mostrarListado(NodoL *vecInfra[100])

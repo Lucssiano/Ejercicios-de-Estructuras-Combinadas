@@ -37,11 +37,6 @@ de factura, mesa, mozo, e importe.
 3. Al final del día emitir un listado con el total a cobrar por cada mozo,
 ordenado por número de mozo (cobran el 1% sobre cada adición) */
 
-/* - Que es la adición? La suma de lo que gasto la mesa?
--
-
-*/
-
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
@@ -56,8 +51,39 @@ struct Plato
   char descrip[40];
 };
 
+struct Fecha
+{
+  int mes, dia, año;
+};
+
+struct Factura
+{
+  Fecha f;
+  int nroFactura, cant, mozo;
+  float precio, importe, total;
+  char descrip[40];
+};
+
+struct ArchivoFacturacion
+{
+  Fecha f;
+  int nroFactura, mesa, mozo;
+  float importe;
+};
+
+struct NodoL
+{
+};
+
+void generarArchivoPlatos();
+
 int main()
 {
+  // generarArchivoPlatos(); // Solo para probarlo
   int facturaInicial, fecha;
   return 0;
+}
+
+void generarArchivoPlatos()
+{
 }
